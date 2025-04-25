@@ -1,0 +1,10 @@
+<!doctype html>
+<title>Response Form</title>
+<h1>Submit Your Info</h1>
+<form method="POST">
+  {{ form.hidden_tag() }}
+  <p>{{ form.name.label }}<br>{{ form.name(size=32) }}</p>
+  <p>{{ form.email.label }}<br>{{ form.email(size=32) }}</p>
+  <p>{{ form.comments.label }}<br>{{ form.comments(size=64) }}</p>
+  <p>{{ form.submit() }}</p>
+</form>
