@@ -1,34 +1,30 @@
-from flask import Flask, render_template, redirect, url_for, request
-from itsdangerous import URLSafeSerializer
-from forms import ResponseForm
-from excel_utils import append_response
+from flask import Flask, render_template, request, redirect
+import requests
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'replace_with_random_secret'
 
-serializer = URLSafeSerializer(app.config['SECRET_KEY'], salt='form-link')
+# Replace with your actual Apps Script URL
+SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUKcg4miBtaanAF_5tVQwvPeNAJHzkRCOHXqul_NrSqDCmosvsd7z1sGhVIrqbDbkXZw/exec"
 
-@app.route('/')
-def index():
-    # Generate a one-time form link token
-    token = serializer.dumps({'sheet': 'Sheet1'})
-    form_url = url_for('fill_form', token=token, _external=True)
-    return f'<a href="{form_url}">Fill Out the Form</a>'
-
-@app.route('/form/<token>', methods=['GET', 'POST'])
-def fill_form(token):
-    try:
-        data = serializer.loads(token)
-    except Exception:
-        return "Invalid or expired link", 400
-
-    form = ResponseForm()
-    if form.validate_on_submit():
-        resp = {
-            'name': form.name.data,
-            'email': form.email.data,
-            'comments': form.comments.data
+@app.route("/", methods=["GET", "POST"])
+def form():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        comment = request.form.get("comment")
+        
+        data = {
+            "name": name,
+            "email": email,
+            "comment": comment
         }
-        append_response(resp)
-        return "Thank you! Your response has been recorded."
-    return render_template('form.html', form=form)
+
+        try:
+            response = requests.post(SCRIPT_URL, data=data)
+            print("Script response:", response.text)
+        except Exception as e:
+            print("Error posting to Google Sheet:", e)
+
+        return redirect("/")  # Redirect after form submit
+
+    return render_template("form.html")
